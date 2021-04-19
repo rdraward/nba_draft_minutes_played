@@ -1,44 +1,19 @@
-import math
-from statistics import mean
 import pandas as pd
-import numpy as np
-from basketball_reference_scraper.draft import get_draft_class
+from basketball_reference_scraper.drafts import get_draft_class
 
-min_year = 1990
-max_year = 2005
+min_year = 1989
+max_year = 2020
 
-# capture the total minutes played (career) for each draft position
-minutes_per_draft_pos = {};
-
+dfs = []
 for year in range(min_year, max_year):
-  draft_class = get_draft_class(year)
+  df = get_draft_class(year)
 
-  # iterate over players drafted
-  # max of 60, not much overhead
-  for index, row in draft_class.iterrows():
-    draft_pos = row.PICK.Pk
+  df = df[['PICK','TOTALS_MP']]
+  df['PICK'] = df['PICK'].astype(int)
+  df['TOTALS_MP'] = pd.to_numeric(df['TOTALS_MP'], 'coerce').fillna(0).astype(int)
 
-    if draft_pos == "Pk":
-      draft_pos = math.nan
-    minutes = row.TOTALS.MP
+  dfs.append(df)
 
-    if not str(minutes).isnumeric() or math.isnan(float(minutes)):
-      minutes = 0
-
-    if not math.isnan(float(draft_pos)):
-      pos = int(draft_pos)
-
-      # create key if it does not exist
-      if not pos in minutes_per_draft_pos:
-        minutes_per_draft_pos[pos] = []
-
-      minutes_per_draft_pos[pos].append(int(minutes))
-
-avg_minutes_per_draft_pos = []
-for pos in minutes_per_draft_pos:
-  minutes_list = minutes_per_draft_pos[pos]
-  avg_min_played = mean(minutes_list)
-  avg_minutes_per_draft_pos.append(avg_min_played)
-  print("{0} - {1}".format(pos, avg_min_played))
-
-# print(avg_minutes_per_draft_pos)
+df = pd.concat(dfs).groupby('PICK').mean()
+filename = 'results_{0}_{1}.txt'.format(min_year, max_year)
+df.to_csv(r'raw_results/{0}'.format(filename), header=None, index=None, sep=' ', mode='a')

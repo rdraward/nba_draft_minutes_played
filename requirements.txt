@@ -1,2 +1,2 @@
 pandas==0.25.3
-git+git://github.comrdraward/basketball_reference_scraper#basketball_reference_scraper
+git+git://github.com/rdraward/basketball_reference_scraper#basketball_reference_scraper
