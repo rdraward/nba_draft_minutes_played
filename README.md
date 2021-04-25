@@ -6,7 +6,7 @@ Right now, I just gather basic minutes played per position and do an average for
 
 ## Future work
 
-- visualize the results
 - breakout playoff minutes vs regular season minutes
 - examine minutes on a playoff team vs minutes on a non-playoff team
   - similarly, minutes on an over .500 team vs minutes on a below .500 team
+- get rid of pick position, sort by total 
