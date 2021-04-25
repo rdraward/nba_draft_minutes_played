@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from basketball_reference_scraper.drafts import get_draft_class
 
 min_year = 1989
-max_year = 2020
+max_year = 2006
 
 # query data
 dfs = []
@@ -22,6 +22,10 @@ for year in range(min_year, max_year + 1):
 df = pd.concat(dfs).groupby('PICK').mean()
 df.reset_index(inplace=True)
 
+# group picks by every pick_group_num picks
+pick_group_num = 5
+df = df.groupby(df[['TOTALS_MP']].index // pick_group_num).mean()
+
 # write to file
 # filename = 'results_{0}_{1}.txt'.format(min_year, max_year)
 # df.to_csv(r'raw_results/{0}'.format(filename), header=None, index=None, sep=' ', mode='a')
@@ -35,9 +39,11 @@ df.insert(2, 'REGRESSION', f(df['PICK']))
 # output chart
 regression_title = 'polynomial' if regression_degree > 1 else 'linear'
 title = '{0} - {1}: {2} regression'.format(min_year, max_year, regression_title)
-ax = df.plot(x='PICK', y='TOTALS_MP', title=title)
+ax = df.plot(x='PICK', y='TOTALS_MP', title=title, kind='scatter')
+df.plot(x='PICK', y='REGRESSION', color='Red', ax=ax)
+
+ax.set_xlim(left=0, right=60)
 ax.set_xlabel('Pick #')
 ax.set_ylabel('Total Career Minutes Played')
-df.plot(x='PICK', y='REGRESSION', color='Red', ax=ax)
 
 plt.show()
