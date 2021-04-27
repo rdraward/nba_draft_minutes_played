@@ -3,14 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from basketball_reference_scraper.drafts import get_draft_class
 
-min_year = 2005
+min_year = 1989
 max_year = 2006
 
-def q25(x):
-    return x.quantile(0.25)
+def q20(x):
+    return x.quantile(0.20)
 
-def q75(x):
-    return x.quantile(0.75)
+def q80(x):
+    return x.quantile(0.80)
 
 # query data
 dfs = []
@@ -25,7 +25,7 @@ for year in range(min_year, max_year + 1):
   dfs.append(df)
 
 # get average career minutes played
-df = pd.concat(dfs).groupby('PICK').agg({'TOTALS_MP': ['mean', q25, q75] })
+df = pd.concat(dfs).groupby('PICK').agg({'TOTALS_MP': ['mean', q20, q80] })
 
 # group picks by every pick_group_num picks
 # pick_group_num = 5
@@ -45,11 +45,15 @@ d = np.polyfit(df['PICK'], df['TOTALS_MP_mean'], regression_degree)
 f = np.poly1d(d)
 df.insert(2, 'REGRESSION', f(df['PICK']))
 
-# output chart
+# chart title
 regression_title = 'polynomial' if regression_degree > 1 else 'linear'
-title = '{0} - {1}: {2} regression'.format(min_year, max_year, regression_title)
+title = '{0} - {1}: {2} regression with confidence band'.format(min_year, max_year, regression_title)
+
+# build plot
 ax = df.plot(x='PICK', y='TOTALS_MP_mean', title=title, kind='scatter')
-df.plot(x='PICK', y='REGRESSION', color='Red', ax=ax)
+df.plot(x='PICK', y='REGRESSION', color='red', ax=ax)
+plt.fill_between(df['PICK'], df['TOTALS_MP_q20'], df['TOTALS_MP_q80'], interpolate=True, color='lightgrey', alpha=0.5, label='20-80% Confidence')
+plt.legend()
 
 ax.set_xlim(left=0, right=60)
 ax.set_xlabel('Pick #')
