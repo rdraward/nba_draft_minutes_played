@@ -3,14 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from basketball_reference_scraper.drafts import get_draft_class
 
-min_year = 1989
-max_year = 2006
+def q10(x):
+    return x.quantile(0.10)
 
-def q20(x):
-    return x.quantile(0.20)
+def q90(x):
+    return x.quantile(0.90)
 
-def q80(x):
-    return x.quantile(0.80)
+# get user input
+min_year = int(input("Enter start year (ex. 2000):") or "1989")
+max_year = int(input("Enter end year (ex. 2005):") or "2006")
+regression_degree = int(input("Enter regression degree (1=linear, 2=poly):") or "1")
+raw_data_file_name = input("Enter the name of the raw data file to save:")
+group_x_picks = int(input("Enter n number of picks to group:") or False)
 
 # query data
 dfs = []
@@ -25,22 +29,21 @@ for year in range(min_year, max_year + 1):
   dfs.append(df)
 
 # get average career minutes played
-df = pd.concat(dfs).groupby('PICK').agg({'TOTALS_MP': ['mean', q20, q80] })
-
-# group picks by every pick_group_num picks
-# pick_group_num = 5
-# df = df.groupby(df[['TOTALS_MP']].index // pick_group_num).mean()
+df = pd.concat(dfs).groupby('PICK').agg({'TOTALS_MP': ['mean', q10, q90] })
 
 # flatten columns
 df.columns = ['_'.join(x) if x[0] != '' else x[1] for x in df.columns]
 df.reset_index(inplace=True)
 
+# group picks by every pick_group_num picks
+if group_x_picks:
+  df = df.groupby(df[['TOTALS_MP_mean']].index // group_x_picks).mean()
+
 # write to file
-# filename = 'results_{0}_{1}.txt'.format(min_year, max_year)
-# df.to_csv(r'raw_results/{0}'.format(filename), header=None, index=None, sep=' ', mode='a')
+if raw_data_file_name:
+  df.to_csv(r'raw_results/{0}.txt'.format(raw_data_file_name), header=None, index=None, sep=' ', mode='a')
 
 # regression
-regression_degree = 2
 d = np.polyfit(df['PICK'], df['TOTALS_MP_mean'], regression_degree)
 f = np.poly1d(d)
 df.insert(2, 'REGRESSION', f(df['PICK']))
@@ -51,8 +54,8 @@ title = '{0} - {1}: {2} regression with confidence band'.format(min_year, max_ye
 
 # build plot
 ax = df.plot(x='PICK', y='TOTALS_MP_mean', title=title, kind='scatter')
-df.plot(x='PICK', y='REGRESSION', color='red', ax=ax)
-plt.fill_between(df['PICK'], df['TOTALS_MP_q20'], df['TOTALS_MP_q80'], interpolate=True, color='lightgrey', alpha=0.5, label='20-80% Confidence')
+df.plot(x='PICK', y='REGRESSION', color='red', ax=ax, label="Regression")
+plt.fill_between(df['PICK'], df['TOTALS_MP_q10'], df['TOTALS_MP_q90'], interpolate=True, color='lightgrey', alpha=0.5, label='10-90% Confidence')
 plt.legend()
 
 ax.set_xlim(left=0, right=60)
