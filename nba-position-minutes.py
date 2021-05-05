@@ -49,8 +49,8 @@ if raw_data_file_name:
   df.to_csv(r'raw_results/{0}.txt'.format(raw_data_file_name), header=None, index=None, sep=' ', mode='a')
 
 # build plot
-plt.scatter(df.index, df['TOTALS_MP_mean'], label='Avg Career Min Played', s=20)
-plt.fill_between(df.index, df['TOTALS_MP_q10'], df['TOTALS_MP_q90'], interpolate=True, color='lightgrey', alpha=0.5, label='10-90% Confidence')
+plt.scatter(df['index'], df['TOTALS_MP_mean'], label='Avg Career Min Played', s=20)
+plt.fill_between(df['index'], df['TOTALS_MP_q10'], df['TOTALS_MP_q90'], interpolate=True, color='lightgrey', alpha=0.5, label='10-90% Confidence')
 plt.legend()
 
 # regression
@@ -59,7 +59,7 @@ if regression_degree > 0:
   f = np.poly1d(d)
   df.insert(2, 'REGRESSION', f(df.index))
 
-  plt.plot(df.index, df['REGRESSION'], color='red', label="Regression")
+  plt.plot(df['index'], df['REGRESSION'], color='red', label="Regression")
 
 # set axis limits, labels
 ax = plt.gca()
@@ -68,10 +68,12 @@ ax.set_xlabel('Pick #')
 ax.set_ylabel('Total Career Minutes Played')
 
 # chart title
-regression_title = 'polynomial' if regression_degree > 1 else 'linear'
-title = '{0} - {1}: {2} regression with confidence band'.format(min_year, max_year, regression_title)
+title = '{0} - {1}'.format(min_year, max_year)
+if regression_degree > 0:
+  regression_title = 'polynomial' if regression_degree > 1 else 'linear'
+  title += ' w. {0} regression'.format(regression_title)
 if sort_by_minutes:
-  title += '\nsorted by minutes played'
+  title += ' sorted by minutes played'
 plt.title(title)
 
 plt.show()
