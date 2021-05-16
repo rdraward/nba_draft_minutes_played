@@ -2,12 +2,21 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from basketball_reference_scraper.drafts import get_draft_class
+from basketball_reference_scraper.players import get_stats
 
 def q10(x):
     return x.quantile(0.10)
 
 def q90(x):
     return x.quantile(0.90)
+
+def get_playoff_minutes(row):
+  try:
+    player_df = get_stats(row['PLAYER'], stat_type='TOTALS', playoffs=True, career=True)
+    if not player_df.empty:
+      return player_df['MP'].sum()
+  except (ValueError, IndexError, AttributeError):
+    return 0
 
 # get user input
 min_year = int(input("Enter start year (ex. 2000): ") or "1989")
@@ -22,8 +31,10 @@ dfs = []
 for year in range(min_year, max_year + 1):
   df = get_draft_class(year)
 
+  df['PLAYOFF_MP'] = df.apply(get_playoff_minutes, axis=1)
+
   # only use relevant columns
-  df = df[['PICK','TOTALS_MP']]
+  df = df[['PICK','TOTALS_MP', 'PLAYOFF_MP']]
   df['PICK'] = df['PICK'].astype(int)
   df['TOTALS_MP'] = pd.to_numeric(df['TOTALS_MP'], 'coerce').fillna(0).astype(int)
 
